@@ -5,11 +5,11 @@
     # This should normally be `/`
     base_url=`/`,
     
-    # This should be either `.html` or `/`
-    link_suffix=`/`,
+    # This should be either `.html` or ""
+    link_suffix="",
     
+    # Apache config
     htaccess=```
-RewriteEngine On
 Options -Indexes +Multiviews
-    ```,
+```,
 ).
