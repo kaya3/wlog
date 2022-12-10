@@ -1,0 +1,64 @@
+@export @let(config=@import `config.lib`)...
+
+@export @fn make_page($title: str) $content: block -> {
+    @export(
+        title=$title,
+        content=$content,
+    ).
+}
+
+@export @fn make_post($title: str, $tags: str list = []) $content: block -> {
+    @export(
+        title=$title,
+        tags=$tags,
+        content=$content,
+    ).
+}
+
+@export @fn contains($_val) $v: any list -> @match $v {
+    [] -> False,
+    [=$_val, *_] -> True,
+    [_, *$tail] -> @contains($_val) $tail,
+}
+
+@fn _distinct($key: function) $v: any list -> @match $v {
+    [$x, $y, *$tail] -> @match @key $x {
+        =@key $y -> @_distinct(key=$key) [$x, *$tail],
+        _ -> [$x, *@_distinct(key=$key) [$y, *$tail]],
+    },
+    _ -> $v,
+}
+@export @fn distinct($key: function = @fn $x -> $x) $v: any list ->
+    @_distinct(key=$key)
+    @v::sorted(key=$key).
+
+@export @fn enumerate($start: int = 0) $v: any list -> @match $v {
+    [] -> [],
+    [$head, *$tail] -> [[$start, $head], *@enumerate(start=@start::add(1).) $tail],
+}
+
+@export @fn flat $vs: any list list -> @match $vs {
+    [] -> [],
+    [$v, *$tail] -> [*$v, *@flat $tail],
+}
+
+@export @fn reverse $vs: any list -> @match $vs {
+    [] -> [],
+    [$head, *$tail] -> [*@reverse $tail, $head],
+}
+
+@export @fn plural($_count: int, $_singular: str, $_plural?: str) $_: none -> @match [$_count, $_plural] {
+    [1, _] -> "1 $_singular",
+    [_, .] -> "$_count {$_singular}s",
+    _ -> "$_count $_plural",
+}
+
+@export @fn fa_anchor($_icon: str, $href?: str) $v: inline -> {
+    <a class="anchor" href?=$href>
+        <i class="anchor-icon fas $_icon"/>
+        $v
+    </a>
+}
+
+@export @fn tag_url $tag: str -> "{$config::base_url}tags/$tag{$config::link_suffix}"
+@export @fn tag_link $tag: str -> @href(@tag_url $tag) $tag

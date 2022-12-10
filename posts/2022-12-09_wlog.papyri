@@ -1,0 +1,35 @@
+@include `../common.lib`
+@make_post(title={Without Loss of Generality})...
+
+@let(urls=@dict::new(
+    old_blog     = `https://andrewkay.name/blog/`,
+    nibbleblog   = `https://www.nibbleblog.com/`,
+    papyri       = `https://kaya3.github.io/papyri`,
+    papyri_crate = `https://crates.io/crates/papyri-lang`,
+    rust         = `https://www.rust-lang.org/`,
+    wlog_wiki    = `https://en.wikipedia.org/wiki/Without_loss_of_generality`,
+    wlog_github  = `https://github.com/kaya3/wlog`,
+).)...
+
+Here comes another blog about computer science and maths things I'm working on or interested in.
+I had one before, called @href($urls::old_blog) {The Distributive Law}, which was mainly maths, but I haven't updated it in (checks notes) six years.
+That's a long time.
+
+Since then, my interests have shifted much more towards programming, and several of the projects I've been working on recently have involved some neat ideas that I want to write about.
+I also want to switch away from @href($urls::nibbleblog) Nibbleblog, the software I used for my previous blog.#
+    @footnote {Not that there is anything wrong with Nibbleblog --- it has served me well, and I'd still recommend it.
+        I'm just not using many of its features, and I want something more like a static site generator.}
+So I think it makes more sense to start another blog with a different focus, rather than revive the old one.
+
+It's also a good opportunity to make something with @href($urls::papyri) Papyri, which is my own programmable markup language.
+I've been working on Papyri for several years, and it's been through a few rewrites, but this year I've finally published @href($urls::papyri_crate) {a compiler for it}, written in @href($urls::rust) Rust.
+So this blog is written in Papyri; the source code for the blog is @href($urls::wlog_github) {here}, for anyone interested in what that looks like.
+
+So, here's the new blog.
+It's called "@href($urls::wlog_wiki) wlog", which to mathematicians means "without loss of generality", but also it sounds a bit like "blog".
+It'll be about my projects and interests, which are often pretty abstract; currently that means algorithms, programming language design and implementation, and a bit of game development.
+Those are fairly specialised topics, but I'm also interested in computer science education, so I'd like to write some posts aimed at novice programmers, too.
+
+I'm not sure how often I'll post.
+There will definitely be periods of months when I don't post anything.
+But hopefully at least in the short term, updates will be relatively frequent; I have a bit of a backlog of things to write about.

@@ -1,0 +1,15 @@
+@include `../common.lib`
+
+@let(
+    data=@import `../postdata.lib`,
+)...
+
+@make_page(title={Tags})...
+@h1 Tags
+
+@plural($data::tags::len, `tag`).{.}
+
+@data::tags::map(@fn $t -> {
+    @href($t::url) $t::name
+    (@plural($t::posts::len, `post`).)
+}).

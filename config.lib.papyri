@@ -1,0 +1,15 @@
+@export(
+    site_author={Andrew Kay},
+    site_title={wlog},
+    
+    # This should normally be `/`
+    base_url=`/`,
+    
+    # This should be either `.html` or `/`
+    link_suffix=`/`,
+    
+    htaccess=```
+RewriteEngine On
+Options -Indexes +Multiviews
+    ```,
+).

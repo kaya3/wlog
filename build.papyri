@@ -1,0 +1,85 @@
+#!/usr/bin/env -S papyri -o public
+
+@include `common.lib`
+@let(
+    data=@import `data.lib`,
+    old_page=$page,
+)...
+
+@fn page($title: inline) $content: block -> {
+    @old_page(
+        title={$config::site_title --- $title},
+        header=$data::page_header,
+        footer=$data::page_footer,
+    ) $content
+}
+
+# write pages
+@list::join @data::pages::map(@fn $p -> {
+    @write_file($p::out_path)
+    @page(title=$p::title) $p::content
+}).
+
+@fn post_link_by_index $i: int -> @match @data::posts::slice($i, @i::add(1).). {
+    [] -> .,
+    [$post] -> @href($post::url) $post::title,
+}
+
+# write posts
+@list::join @data::posts::map(@fn $post -> {
+    @let(
+        prev_link=@match $post::index {
+            0 -> .,
+            $i -> <span>{<-} @post_link_by_index @i::add(-1).</span>,
+        },
+        next_link=@match @post_link_by_index @post::index::add(1). {
+            . -> .,
+            $link -> <span style=`flex-grow: 1; text-align: right;`>$link {->}</span>
+        },
+    )...
+    
+    @write_file($post::out_path)
+    @page(title=$post::title) {
+        $post::heading
+        $post::content
+        <hr>
+        <div style=`display: flex;`>$prev_link$next_link</div>
+    }
+}).
+
+# write year archive pages
+@list::join @data::years::map(@fn $year -> {
+    @let(title={Posts from $year::year})...
+    @write_file($year::out_path)
+    @page(title=$title) {
+        @h1 $title
+        <p>@plural($year::posts::len, `post`).{.}</p>
+        @list::join @reverse @year::posts::map(@fn $post -> $post::stub).
+    }
+}).
+
+# write tag pages
+@list::join @data::tags::map(@fn $tag -> {
+    @let(title={Posts tagged: $tag::name})...
+    @write_file($tag::out_path)
+    @page(title=$title) {
+        @h1 $title
+        <p>@plural($tag::posts::len, `post`).{.}</p>
+        @list::join @reverse @tag::posts::map(@fn $post -> $post::stub).
+    }
+}).
+
+# write .htaccess
+@match $config::htaccess {
+    $s: str -> @write_file(`.htaccess`) $s,
+    . -> .,
+}
+
+# write home page
+@write_file(`index.html`)
+@page(title={Home})...
+
+@list::join
+    @list::map(@fn $post -> $post::stub)
+    @reverse
+    @data::posts::slice(-5).

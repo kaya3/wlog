@@ -1,0 +1,66 @@
+@include `common.lib`
+
+# load data for pages and posts
+@export @let(
+    posts=@list::map(@fn $i_path -> @match $i_path {
+        [$i, $path and "posts/{$y-$m-$d}_$slug"] ->
+            @let(
+                post_data=@import $path,
+                out_path="$y/$m/$d/$slug.html",
+                url="{$config::base_url}$y/$m/$d/$slug{$config::link_suffix}",
+                date="$y-$m-$d",
+                heading={
+                    @h2 @fa_anchor(`fa-link`, href=$url) $post_data::title
+                    <div class="metadata">
+                    <time datetime=$date>$date</time> --- @match $post_data::tags::is_empty {
+                        True -> {untagged},
+                        False -> @list::join(`, `) @post_data::tags::map($tag_link).,
+                    }
+                    </div>
+                },
+                stub={
+                    $heading
+                    @match $post_data::content {
+                        . -> <p><i>Empty</i></p>,
+                        {$p} -> $p,
+                        {$p *_} -> {
+                            $p
+                            <div>@href($url) {Continue reading...}</div>
+                        },
+                    }
+                    <hr>
+                },
+            ) @dict::new(
+                index=$i,
+                src_path=$path,
+                out_path=$out_path,
+                url=$url,
+                slug=$slug,
+                heading=$heading,
+                stub=$stub,
+                date=$date,
+                year=$y,
+                **$post_data,
+            ).,
+    }) @enumerate @list_files `posts/`,
+    
+    years=@list::map(
+        @fn $year -> @dict::new(
+            year=$year,
+            out_path="$year/index.html",
+            url="{$config::base_url}$year/",
+            posts=@posts::filter(@fn $post -> @match $post::year {=$year -> True, _ -> False,}).,
+        ).
+    ) @distinct @posts::map(@fn $post -> $post::year).,
+    
+    tags=@list::map(
+        @fn $tag -> @dict::new(
+            name=$tag,
+            out_path="tags/$tag.html",
+            url=@tag_url $tag,
+            posts=@posts::filter(@fn $post -> @contains($tag) $post::tags).,
+        ).
+    ) @distinct @flat @posts::map(
+        @fn $post -> $post::tags
+    ).,
+).
