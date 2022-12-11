@@ -1,5 +1,3 @@
-#!/usr/bin/env -S papyri -o public
-
 @include `common.lib`
 @let(
     data=@import `data.lib`,
@@ -9,6 +7,9 @@
 @fn page($title: inline) $content: block -> {
     @old_page(
         title={$config::site_title --- $title},
+        head={
+            <link rel=`stylesheet` type=`text/css` href="{$config::base_url}resources/style.css">
+        },
         header=$data::page_header,
         footer=$data::page_footer,
     ) $content
@@ -70,8 +71,8 @@
 }).
 
 # write .htaccess
-@match $config::htaccess {
-    $s: str -> @write_file(`.htaccess`) $s,
+@match $config {
+    (htaccess=$s: str, **_) -> @write_file(`.htaccess`) $s,
     . -> .,
 }
 
@@ -82,4 +83,4 @@
 @list::join
     @list::map(@fn $post -> $post::stub)
     @reverse
-    @data::posts::slice(-5).
+    @data::posts::slice($config::posts_main_page::negate).

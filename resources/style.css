@@ -1,0 +1,7 @@
+button { font-size: var(--font-size-regular); font-family: var(--font-family-sans); font-weight: var(--font-weight-light); }
+
+table.dfa, table.dfa-state-history, table.dfa-grid { user-select: none; }
+table.dfa tr:first-child, table.dfa-state-history tr:first-child { border-bottom: var(--box-border); }
+table.dfa th:first-child { text-align: left; border-right: var(--box-border); }
+table.dfa tr:not(:first-child):hover { background-color: var(--blue-bg); }
+table.dfa td, table.dfa-state-history td, table.dfa-grid td { min-width: 1.25rem; text-align: center; }

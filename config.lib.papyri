@@ -12,4 +12,7 @@
     htaccess=```
 Options -Indexes +Multiviews
 ```,
+    
+    posts_main_page=5,
+    posts_most_recent=10,
 ).

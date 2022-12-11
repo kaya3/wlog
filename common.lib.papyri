@@ -10,7 +10,7 @@
 @export @fn make_post($title: str, $tags: str list = []) $content: block -> {
     @export(
         title=$title,
-        tags=$tags,
+        tags=@tags::sorted.,
         content=$content,
     ).
 }
@@ -60,5 +60,12 @@
     </a>
 }
 
-@export @fn tag_url $tag: str -> "{$config::base_url}tags/$tag{$config::link_suffix}"
+@export @fn tag_url $tag: str -> "{$config::base_url}tag/$tag{$config::link_suffix}"
 @export @fn tag_link $tag: str -> @href(@tag_url $tag) $tag
+
+@export @fn subheading $t: inline -> {
+    @let(id=@str::unique_id $t)
+    <h3 id=$id>@fa_anchor(`fa-hashtag`, href="\#$id") $t</h3>
+}
+
+@export @fn load_js $path: str -> <script type=`text/javascript` src="{$config::base_url}resources/$path.js"/>

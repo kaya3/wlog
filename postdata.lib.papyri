@@ -56,7 +56,7 @@
     tags=@list::map(
         @fn $tag -> @dict::new(
             name=$tag,
-            out_path="tags/$tag.html",
+            out_path="tag/$tag.html",
             url=@tag_url $tag,
             posts=@posts::filter(@fn $post -> @contains($tag) $post::tags).,
         ).

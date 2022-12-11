@@ -1,0 +1,265 @@
+@include `../common.lib`
+@make_post(title={Matching 2D Patterns}, tags=[DFAs, algorithms, MJr])...
+
+@let(urls=@dict::new(
+    markov_junior        = `https://github.com/mxgmn/MarkovJunior`,
+    pcg_wiki             = `https://en.wikipedia.org/wiki/Procedural_generation`,
+    mjr                  = `https://kaya3.github.io/MJr/`,
+    mazes_and_lakes_play = `https://kaya3.github.io/MJr/playground/#IyBBdXRob3I6IEFuZHJldyBLYXkKCnVzZSBsZXQgZyA9IGdyaWQgW0JXUkVJXQoKbGV0IExBS0VfU0VFRFMgPSA0CmxldCBMQUtFX1NJWkUgPSBnLndpZHRoICogZy5oZWlnaHQgLy8gNApsZXQgTEFORF9TRUVEUyA9IDMyCmxldCBBTklNQVRFX1dBVEVSID0gdHJ1ZQoKIyBtYWtlIGEgZmV3IGxha2VzIGJ5IHJhbmRvbSBncm93dGgKQGxpbWl0IExBS0VfU0VFRFMKb25lOiBbQl0gLT4gW0ldCgpAbGltaXQgTEFLRV9TSVpFIC0gTEFLRV9TRUVEUwpvbmU6IFtJQl0gLT4gWy5JXQoKIyBtYWtlIHNvbWUgbGFuZCBieSBhIHNlbGYtYXZvaWRpbmcgcmFuZG9tIHdhbGsgd2l0aCBiYWNrdHJhY2tpbmcKQGxpbWl0IExBTkRfU0VFRFMKb25lOiBbQl0gLT4gW1JdCgptYXJrb3Y6CiAgICBvbmU6IFtSQkJdIC0+IFtXV1JdCiAgICBvbmU6IFtSV1ddIC0+IFtFRVJdCgpvbmU6IFtSXSAtPiBbRV0KCiMgZXJvZGUgbmFycm93IHNlY3Rpb25zIG9mIGxhbmQKb25lOiBbQkJXQkJdIC0+IFsuLkIuLl0KCiMgcmVwbGFjZSB0aGUgc29saWQgbGFrZXMgd2l0aCBpc29sYXRlZCBwaXhlbHMKQGxpbWl0IExBS0VfU0laRSAvLyAyCm9uZTogW0lJXSAtPiBbQkJdCgptYXJrb3Y6CiAgICAjIGZpbGwgdW51c2VkIHNwYWNlIHdpdGggYSB3YXRlciB0ZXh0dXJlCiAgICBvbmU6CiAgICAgICAgW0JCLi9CQkIvLkIuXSAtPiBbLi4uLy5JLi8uLi5dCiAgICAgICAgWy5JLi9JQkkvLkkuXSAtPiBbLi4uLy5JLi8uLi5dCgogICAgIyBkZWxldGUgd2F0ZXIgcGl4ZWxzIGF0IHJhbmRvbSwgZm9yIGFuIGFuaW1hdGVkIGVmZmVjdAogICAgb25lOiBbSV0gLT4gW0JdIGlmIEFOSU1BVEVfV0FURVIK,JavaScript,1,1,64,64,1`,
+    regex_wiki           = `https://en.wikipedia.org/wiki/Regular_expression`,
+    dfa_wiki             = `https://en.wikipedia.org/wiki/Deterministic_finite_automaton`,
+    pacman_play          = `https://kaya3.github.io/MJr/playground/#IyBBdXRob3I6IEFuZHJldyBLYXkKCmdyaWQgW0JXRFBZSUVST10KCiMgZHJhdyBtYXplCnB1dCBbUF0gYXQgb3JpZ2luCmFsbDogW1BCQl0gLT4gWy4uUF0KcHV0IFtXXSBhdCBvcmlnaW4KYWxsOiBbV0JQQlBdIC0+IFsuLi4uV10KcHV0IFtEXSBhdCBvcmlnaW4KYWxsOiBbREJQQlddIC0+IFsuLlcuRF0Kb25lOiBbREJQQkRCUC9CQkJCQkJCLy5CUEJQQlBdIC0+IFsuLlcuLi4uLy4uLi4uLi4vLi4uLi4uLl0KCkBsaW1pdCA1Cm9uZTogW0RCUEJEXSAtPiBbLi5XLi5dCmFsbDogW1BCUF0gLT4gWy5QLl0KYWxsOiBbRF0gLT4gW1ddCm9uZTogW0JCQkJCQi9CUEJXQlAvQkJCQkJCXSAtPiBbLi4uLi4uLy4uUFBQLi8uLi4uLi5dCgojIGFkZCBwbGF5ZXIgYW5kIGVuZW1pZXMKcHV0IFtZXSBhdCBvcmlnaW4KCkBsaW1pdCA0Cm9uZTogW1ddIC0+IFtPXQoKIyBwbGF5IQoKdW5pb24gWz9dID0gW1tXQl1dCgpzZXF1ZW5jZToKICAgICMgbWFyayB1bnNhZmUgbW92ZXMKICAgIGFsbDogWy5CQkIvW1JPXUI/Qi8uQkJCXSAtPiBbLi5JLi8uSS5JLy4uSS5dIGlmIGNvdW50IFtZXSA+IDAKICAgIAogICAgIyBhbGxvdyBwbGF5ZXIgdG8gYmFja3RyYWNrIGlmIHRoZXkgaGF2ZSBubyBzYWZlIG1vdmUKICAgIG9uZTogW0VdIC0+IFtCXSBpZiBjb3VudCBbWUI/XSA9PSAwCiAgICAKICAgICMgYWxsb3cgcGxheWVyIHRvIG1ha2UgYW4gdW5zYWZlIG1vdmUgaWYgdGhleSBoYXZlIG5vIHNhZmUgbW92ZQogICAgb25lOiBbSV0gLT4gW0JdIGlmIGNvdW50IFtZQj9dID09IDAKICAgIAogICAgIyBwbGF5ZXIgbW92ZXMKICAgIEBsaW1pdCAxCiAgICBhbGw6CiAgICAgICAgW1lCV10gLT4gW0JFWV0KICAgICAgICBbWUJCXSAtPiBbQkVZXSBpZiBjb3VudCBbWUJXXSA9PSAwCiAgICAgICAgW1tJRV1dIC0+IFtCXQogICAgCiAgICAjIGVuZW15IGVhdHMgcGxheWVyLCBpZiBwb3NzaWJsZQogICAgb25jZToKICAgICAgICBbUkJZXSAtPiBbQkJSXQogICAgICAgIFtPQlldIC0+IFtXQlJdCiAgICAKICAgICMgZW5lbWllcyBtb3ZlCiAgICBAbGltaXQgMQogICAgYWxsOgogICAgICAgIGxldCBhbGl2ZSA9IGNvdW50IFtZXSA+IDAKICAgICAgICBbUkJXXSAtPiBbQkRPXSBpZiBhbGl2ZQogICAgICAgIFtPQlddIC0+IFtXRE9dIGlmIGFsaXZlCiAgICAgICAgW1JCQl0gLT4gW0JEUl0gaWYgYWxpdmUKICAgICAgICBbT0JCXSAtPiBbV0RSXSBpZiBhbGl2ZQogICAgICAgIFtEXSAtPiBbQl0K,JavaScript,1,1,45,45,0`,
+).)...
+
+Earlier this year, Maxim Gumin released a fascinating new programming language named @href($urls::markov_junior) MarkovJunior.
+It's a specialised language which will mainly be useful for @href($urls::pcg_wiki) {procedural content generation}, and it has some relatively complex features for that.
+But the core idea is quite simple: you have a grid with coloured cells, and a MarkovJunior program has rules to transform that grid by replacing patterns with other patterns.
+
+@include `../lib/mjr.lib`
+@load_js `mjr/basic_maze`
+@mjr_widget(model=`basic_maze`, size=15).
+
+The example shown here is a very simple program with just one rule: where the pattern "white, black, black" occurs, replace it with "white, grey, white".
+The program keeps applying that rule in a random place until it runs out of places to apply it.
+The result, for this rule at least, is a random maze.
+I still find it amazing that such a simple program is able to do something that interesting.
+
+I became so intrigued by MarkovJunior that I spent the next few months developing a language of my own, @href($urls::mjr) MJr, which is heavily based on MarkovJunior.
+MJr is nowhere near complete, but the core of it is working.
+In MJr syntax, the aforementioned rule would be written as `[WBB] -> [WAW]`, where `B`, `W` and `A` mean black, white and grey respectively.
+In fact, here's the complete source code for that program:
+
+```
+grid [BWA]
+put [W] at origin
+one: [WBB] -> [WAW]
+```
+
+There's something elegant about how expressive this language is, though of course all credit in that regard goes to Maxim.
+But expressiveness doesn't come for free --- the language needs to be implemented.
+
+
+@subheading {The Problem}
+
+The simple maze program is executed like this:
+
+@numbered [
+    {Choose a random place where the pattern `[WBB]` occurs.},
+    {If there is such a place, replace it with `[WAW]` and repeat step 1.},
+    {Otherwise, stop.},
+]
+
+This means we need some way to find a random occurrence of the pattern `[WBB]`.
+
+The naive solution is to search the whole grid, check every three cells in a row to see if they are `[WBB]`, and build a list of every occurrence.
+Then, we can randomly sample from that list.
+But that's terrible! We don't want to search the whole grid on every step; that won't scale well to big grids.
+
+Fortunately, we don't have to.
+On each step, only a small part of the grid changes --- we only need to check around that part to see if the change made or broke any matches of the pattern.
+All of the other matches which we already knew about from the previous step are still valid.
+So what we want is a data structure which stores where those matches are, and an algorithm for updating it when the grid changes.
+
+At this point it seems like the problem is practically solved.
+We only need to do one full scan of the grid to initialise the data structure, then on each step the size of the changed area is small, so it's quick to check all of the places where a match might have been made or broken.
+
+Note also that even though this maze example has just one rule, there are really four patterns, because we need to match `[WBB]` horizontally and vertically, forwards and backwards.
+So we need to check for updates on all four patterns when the grid changes.
+If we had more rules, we'd need to do more checks --- here's another example, where the grid is bigger and there are 24 different patterns.#
+    @footnote {You can mess around with this program yourself in the @href($urls::mazes_and_lakes_play) {MJr Playground}, if you like.}
+
+@load_js `mjr/mazes_and_lakes`
+@mjr_widget(model=`mazes_and_lakes`, size=64).
+
+Nonetheless, if we can check for new matches of one pattern efficiently, then we can check four, or a few dozen.
+The important thing is that the performance no longer depends on the size of the grid, just the number of different rules.
+The MarkovJunior interpreter does a bit better, by doing the initial scan in a clever way, and updating the data structures for each pattern lazily.#
+    @footnote {That is, MarkovJunior waits until a pattern is needed before it does the initial full-grid scan, and it stops updating the matches for a pattern that's no longer needed.}
+
+But what if I want programs with @emph hundreds of patterns?
+Even if each data structure is cheap to update, doing hundreds of updates per step is going to be expensive.
+So there's the problem: how to scale up to find matches for lots of patterns?
+
+
+@subheading {Regular Expressions}
+
+The problem of finding all matches of multiple patterns is much better studied in the one-dimensional case, so it makes sense to start there.
+One of the most important tools for pattern-matching is @href($urls::regex_wiki) {regular expressions}, or "regexes".
+A regex like `ABC|DEF` matches either the string "ABC" or the string "DEF", and we could write a regex like this with any number of patterns.
+Regexes can also match wildcards or character groups, so e.g. `A.[CD]` means an 'A', then any character, then either a 'C' or a 'D'.
+
+The key thing about regexes is that you can find matches efficiently, even if your regex is checking for lots of different patterns at the same time.
+Here's how it works: you convert the regex into a @href($urls::dfa_wiki) {deterministic finite automaton} (DFA), which for our purposes is essentially just a lookup table like this:
+
+@include `../lib/dfa.lib`
+@dfa_table(
+    alphabet=[A, B, C, D, E, F],
+    accept=[3, 6],
+) [
+    [1, 0, 0, 4, 0, 0],
+    [1, 2, 0, 4, 0, 0],
+    [1, 0, 3, 4, 0, 0],
+    [1, 0, 0, 4, 0, 0],
+    [1, 0, 0, 4, 5, 0],
+    [1, 0, 0, 4, 0, 6],
+    [1, 0, 0, 4, 0, 0],
+]
+
+Let's run through how this DFA would find the match in the string "ABDEFBA":
+
+[
+    {Start in state 0.},
+    {The first letter is @b A, so look up row 0, column A. The number there is 1, so that's the next state.},
+    {The next letter is @b B, so look up row 1, column B. The next state is that number, 2.},
+    {The next letter is @b D, so look up row 2, column D. That's 4.},
+    {The next letter is @b E; in row 4, column E, we find the next state is 5.},
+    {The next letter is @b F. Row 5, column F has the next state, 6.},
+    {State 6 is specially marked as meaning we found a match --- and indeed, the last three letters were "DEF".},
+    {The next letter is @b B ...},
+]
+
+Notice how efficient this can be: regardless of how big the table is, we only need to do one table lookup per letter in the input string, and then check if the state is a match.
+That means for a string of length @i n, we can find every match in O(@i n) time, regardless of how many patterns we are searching for.
+There is no backtracking required; you just handle each character one-by-one.
+
+If that sounds too good to be true, then I should mention the cost.
+Converting a regex like `ABC|DEF` into a DFA like this is not cheap; there are standard algorithms to do it, but in the worst case it can take exponential time in the size of the regex, and the resulting DFA might be exponentially large.
+That doesn't mean the search will be slower, but building the DFA in the first place may be quite slow, and the DFA may take up a lot of memory.#
+    @footnote {This is one of the reasons that general-purpose regex engines don't actually work this way.
+        But it's fine for me, because I'm writing a compiler, so I can build the DFA at compile-time.}
+
+As a side-note, traditionally a DFA has a set of "accepting" states, so for each state we only know whether there was a match or not --- like the asterisks in the table above.
+That means for a regex that checks multiple patterns, if we find a match then we don't necessarily know which pattern it's for.
+But there's nothing stopping us from augmenting the table to say which states match which patterns; for example state 3 means "ABC" was matched, while state 6 means "DEF" was.
+In particular, it turns out that the standard regex-to-DFA algorithms need only minor changes to make this work.
+
+
+@subheading {Handling Updates}
+
+That's all well and good for when we initially scan the whole string, but we also want to handle updates without having to search the whole string again.
+That is, if our string changed in one place from "AB{@b D}EFBA" to "AB{@b C}EFBA", we want to tell that there is now a match of "ABC", and also that there isn't a match of "DEF" any more.
+
+The trick here is that when we do the initial scan, we don't just report which matches we found --- we also record the full sequence of DFA states in an array:
+
+@dfa_state_history(
+    string=[A, B, D, E, F, B, A],
+    states=[1, 2, 4, 5, 6, 0, 1],
+).
+
+We always start in state 0, and then each state is determined by the previous state (to the left) and the letter from the string (in the row above).
+This means when we change the 'D' to a 'C' in the third column, the states in the first and second columns don't need to change; they don't depend on the states to their right, so they are still accurate.
+So we update the table as follows:
+
+[
+    {In the third column (the one we are changing from 'D' to 'C'), we now need to look up row 2, column C, which is a 3.},
+    {Since we changed the 4 to a 3, the state in the next column also changes --- row 3, column E is a 0.},
+    {That means we change the 5 to a 0, and the change keeps cascading --- row 0, column F is also a 0.},
+    {So we change the 6 to a 0 and keep going --- row 0, column B is a 0.},
+    {At this point, the old state was 0 and the new state is also 0, so there are no more changes to propagate.},
+]
+
+Since there's now a state 3 in the third column, that indicates a match at that position --- and indeed, the previous three letters there are "ABC".
+Furthermore, there's no longer a state 6 in the fifth column, which means the previous match of "DEF" in that position is now broken.
+Here's the updated array:
+
+@dfa_state_history(
+    string=[A, B, D, E, F, B, A],
+    states=[1, 2, {@strikethrough 4 -> 3}, {@strikethrough 5 -> 0}, {@strikethrough 6 -> 0}, 0, 1],
+).
+
+Changing the 'D' to a 'C' caused a kind of chain reaction which changed more than just the state in that column.
+But once we hit a state that didn't change, we could be sure that the rest of the states would also not change.
+This happened after three steps, and that's no coincidence --- the patterns we're searching for, "ABC" and "DEF", are of length 3.
+
+In general, the number of steps it takes to perform an update will only depend on the size of the changed area and the sizes of the patterns; the change is "too far away" from the rest of the string to make or break any patterns elsewhere.
+If we change @i w letters in the same place, we can update our match data structure in O(@i w~+~@i k) time, where @i k is the length of the largest pattern.
+Note what this @emph {doesn't} depend on --- the length of the whole string, or the number of different patterns.
+
+
+@subheading {Extending to 2D}
+
+So we have an algorithm with the performance characteristics we want, but it only works on one-dimensional strings.
+Suppose instead of a string, we actually have a 2D grid of letters, and we want to match two-dimensional patterns.
+In MJr's syntax the pattern `[ABC/DEF]` means "ABC" in one row and then "DEF" below it in the next row.
+
+If you look at it from a certain angle, the DFA we saw in the previous section reduced a one-dimensional problem to zero dimensions: recognising the patterns "ABC" and "DEF" turned into recognising the states 3 and 6, which is of course much easier.
+We can use the same DFA to reduce our 2D problem to a 1D problem.
+
+Here's an example of a grid we might want to search:
+
+@grid_table [
+    @list::map($b) [A, E, E, F, A, B],
+    @list::map($b) [A, A, B, C, C, D],
+    @list::map($b) [F, D, E, F, A, A],
+]
+
+Here's the same grid, but also with the DFA states according to the algorithm in the previous section:
+
+@grid_table [
+    [0, {(@b A, 1)}, {(@b E, 0)}, {(@b E, 0)}, {(@b F, 0)}, {(@b A, 1)}, {(@b B, 2)}],
+    [0, {(@b A, 1)}, {(@b A, 1)}, {(@b B, 2)}, {(@b C, 3)}, {(@b C, 0)}, {(@b D, 4)}],
+    [0, {(@b F, 0)}, {(@b D, 4)}, {(@b E, 5)}, {(@b F, 6)}, {(@b A, 1)}, {(@b A, 1)}],
+]
+
+To search for the pattern `[ABC/DEF]`, we can instead search for state 3 with state 6 below it in the next row.
+Or if we wanted to search for `[ABC/ABC]`, that would be a 3 with another 3 below it.
+
+Effectively, "3,~6" and "3,~3" are one-dimensional patterns, so they're easier to search for.
+Here's where it gets a bit meta: we don't have to search for "3,~6" and "3,~3" independently.
+We can write another regex, like `36|33`, and build another DFA for it.
+Here's that DFA:
+
+@dfa_table(
+    alphabet=[Three, Six, Other],
+    accept=[2, 3],
+) [
+    [1, 0, 0],
+    [2, 3, 0],
+    [2, 3, 0],
+    [1, 0, 0],
+]
+
+I've relabelled the digits 3 and 6, which are states of the old DFA, to avoid confusion with the states of the new DFA.
+The "accepting states" of the new DFA are:
+
+[
+    {State 2, which matches "three, six", meaning `[ABC/DEF]`, and},
+    {State 3, which matches "three, three", meaning `[ABC/ABC]`.},
+]
+
+Notice also that the new DFA doesn't need columns for every different state from the old DFA.
+Since only "three" and "six" matter for the 2D patterns we're matching, we can group all of the non-accepting states from the old DFA into an "other" category.
+That helps to make the second DFA smaller, though it does mean we need to know the mapping from old-DFA-states to new-DFA-columns, and do a lookup when we translate between them.
+
+So now we have two DFAs: the @b {row-DFA} consumes the letters from the grid, and the @b {column-DFA} consumes the row-DFA's states.
+
+How about handling updates?
+When there is a change in the grid, that's a change in the row-DFA's input, so we need to recompute the row-DFA's states.
+But those are the inputs for the column-DFA, so we then need to propagate those changes by recomputing the col-DFA's states.
+Those states then indicate when one of our 2D patterns is matched.
+
+
+@subheading Conclusion
+
+What does all of this get us?
+The main upside is that we can search for 2D patterns, and update our search when the grid changes in a small area without having to scan the whole grid again, and without having to check each individual pattern.
+If there is a change in a @i w~by~@i h area of the grid, it takes only O((@i w~+~@i k)(@i h~+~@i l)) time to update the DFA states, where @i k and @i l are the dimensions of the largest pattern.#
+    @footnote {To this, you also have to add the cost of updating the data structures which store the locations of all of the matches.
+        This can be done in O(1) time per match that is made or broken --- likewise, it doesn't have to depend on the total number of patterns.}
+In particular, the running time doesn't depend on the number of patterns you want to match.
+
+Unfortunately, this doesn't mean you can scale up to huge numbers of patterns; the sizes of the two DFAs may still be exponential in the number of patterns.
+That's not as big of a problem as it might sound; @href($urls::pacman_play) {here's a program} which matches 72 different patterns, and the two DFAs together take up less than 100KB of space without compression.
+But it does mean I can't scale to hundreds of patterns.#
+    @footnote {Well, I could just split the patterns into sets of 72.
+        That's probably good enough.
+        But it would also be nice if such a short program didn't compile to hundreds of KB.}
+
+There's also the rather significant benefit that all of this works for patterns with wildcards.
+In MJr syntax, `[A./[BC][^D]]` matches a 2x2 pattern with an 'A' and then any character in the first row, then either a 'B' or 'C' in the next row followed by any character except 'D'.
+That's nothing regexes can't already do, so it's pretty much free in this approach.
+
+Hopefully my explanation has made sense; it can be hard to get this kind of thing across in writing.
+I will be returning to this algorithm in later posts because there's more to say about it.
+Also, as far as I know, the algorithm is new, but it doesn't feel like it should be; I've done little but glue existing standard algorithms together.
+If you have seen it somewhere before, I'd love to hear about it.

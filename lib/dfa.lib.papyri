@@ -1,0 +1,36 @@
+@include `../common.lib`
+
+@export @fn dfa_table($alphabet: str list, $accept: int list) $tbl: int list list -> {
+    <table class=`tabular-data dfa`>
+        <tbody>
+        <tr><th/>@list::join @alphabet::map(@fn $a -> <th scope=`col`>$a</th>).</tr>
+        @list::join @list::map(@fn $row -> @match $row {
+            [$i, $r] -> {
+                <tr>
+                <th scope=`row`>State $i@match @contains($i) $accept {True -> {*}, False -> .}</th>
+                @list::join @r::map(@fn $j -> <td>$j</td>).
+                </tr>
+            },
+        }) @enumerate $tbl
+        </tbody>
+    </table>
+}
+
+@export @fn dfa_state_history($string: str list, $states: inline list) $_: none -> {
+    <table class=`tabular-data dfa-state-history`>
+        <tbody>
+        <tr><td/>@list::join @string::map(@fn $s -> <td>@b $s</td>).</tr>
+        <tr><td>0</td>@list::join @states::map(@fn $i -> <td>$i</td>).</tr>
+        </tbody>
+    </table>
+}
+
+@export @fn grid_table $tbl: inline list list -> {
+    <table class=`tabular-data dfa-grid`>
+        <tbody>
+        @list::join @tbl::map(@fn $row -> {
+            <tr>@list::join @row::map(@fn $x -> <td>$x</td>).</tr>
+        }).
+        </tbody>
+    </table>
+}
