@@ -163,7 +163,7 @@ Furthermore, there's no longer a state 6 in the fifth column, which means the pr
 Here's the updated array:
 
 @dfa_state_history(
-    string=[A, B, D, E, F, B, A],
+    string=[A, B, C, E, F, B, A],
     states=[1, 2, {@strikethrough 4 -> 3}, {@strikethrough 5 -> 0}, {@strikethrough 6 -> 0}, 0, 1],
 ).
 
