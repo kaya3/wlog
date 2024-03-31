@@ -15,39 +15,18 @@
     ).
 }
 
-@export @fn contains($_val) $v: any list -> @match $v {
-    [] -> False,
-    [=$_val, *_] -> True,
-    [_, *$tail] -> @contains($_val) $tail,
-}
-
-@fn _distinct($key: function) $v: any list -> @match $v {
+@fn _distinct($key: function) $v: list -> @match $v {
     [$x, $y, *$tail] -> @match @key $x {
         =@key $y -> @_distinct(key=$key) [$x, *$tail],
         _ -> [$x, *@_distinct(key=$key) [$y, *$tail]],
     },
     _ -> $v,
 }
-@export @fn distinct($key: function = @fn $x -> $x) $v: any list ->
+@export @fn distinct($key: function = @fn $x -> $x) $v: list ->
     @_distinct(key=$key)
     @v::sorted(key=$key).
 
-@export @fn enumerate($start: int = 0) $v: any list -> @match $v {
-    [] -> [],
-    [$head, *$tail] -> [[$start, $head], *@enumerate(start=@start::add(1).) $tail],
-}
-
-@export @fn flat $vs: any list list -> @match $vs {
-    [] -> [],
-    [$v, *$tail] -> [*$v, *@flat $tail],
-}
-
-@export @fn reverse $vs: any list -> @match $vs {
-    [] -> [],
-    [$head, *$tail] -> [*@reverse $tail, $head],
-}
-
-@export @fn plural($_count: int, $_singular: str, $_plural?: str) $_: none -> @match [$_count, $_plural] {
+@export @fn plural($_count: int, $_singular: str, $_plural?: str). -> @match [$_count, $_plural] {
     [1, _] -> "1 $_singular",
     [_, .] -> "$_count {$_singular}s",
     _ -> "$_count $_plural",
@@ -68,4 +47,13 @@
     <h3 id=$id>@fa_anchor(`fa-hashtag`, href="\#$id") $t</h3>
 }
 
-@export @fn load_js $path: str -> <script type=`text/javascript` src="{$config::base_url}resources/$path.js"/>
+@export @fn resource $path: str -> "{$config::base_url}resources/$path"
+
+@export @fn image_figure($caption: str) $filename: str -> {
+    <figure>
+    @image(alt=$caption) @resource "images/$filename"
+    <figcaption>$caption</>
+    </figure>
+}
+
+@export @fn load_js $path: str -> @script(src=@resource "$path.js").

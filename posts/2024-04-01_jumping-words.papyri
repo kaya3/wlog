@@ -1,0 +1,117 @@
+@include `../common.lib`
+@make_post(title={The 'Jumping Words' Problem}, tags=[animation])...
+
+@let(urls=@dict::new(
+    prim_reaper = `https://kaya3.itch.io/prim-reaper`,
+    hekateras = `https://itch.io/profile/hekateras`,
+)., dialogue=@dict::new(
+    prim = `Primrose Thorn, on location. Who do I kill?`,
+    sage = `Easy, rookie. My codename is Sage. I have the dubious honour of holding your hand through this batch of missions.`,
+).)...
+
+@load_js `scripts/animated_text`
+
+@implicit(language='js')...
+
+In many games, particularly those without voice-acting, text spoken by a character is revealed letter-by-letter.
+It's a neat way to give the player the feeling that the text on the screen is being said by somebody in real-time.
+
+It's also very easy to implement: when you draw the text to the screen, take a substring of the appropriate length, and draw the substring instead.
+The substring's length can be a counter that ticks up by one letter per frame, or at some other rate.
+Here's a demo using some dialogue from our game @href($urls::prim_reaper) {Prim Reaper} (with art and writing by @href($urls::hekateras) {Hekateras}): press the 'play' button to see the animation.
+
+@fn text_widget($portrait: str, $pre_wrap: bool, $right: bool=False) $text: str -> {
+    @let(
+        widget_id=@str::unique_id `text_widget`,
+        portrait_img=<img src=@resource "images/$portrait.png" alt=$portrait/>,
+        text_box=<span id="{$widget_id}_text" style=`display:inline-block;width:376px;white-space:pre-line;color:white;text-align:left;`/>,
+        text_js=@json::write @text::trim.,
+        pre_wrap_js=@json::write $pre_wrap,
+    )...
+    <div style=`margin:auto;text-align:center;`>
+        <div style=`display:inline-flex;padding:8px;gap:8px;background:var(--grey-1);`>
+            @match $right {
+                False -> {$portrait_img $text_box},
+                True -> {$text_box $portrait_img},
+            }
+        </>
+        <div style=`display:inline-flex;padding:8px;gap:8px;`>
+            <button id="{$widget_id}_button" style=`padding:8px 16px;`>\u25B6</>
+            <input id="{$widget_id}_scroller" type=`range` style=`width:20em;` value=0 min=0/>
+        </>
+    </>
+    @script "AnimatedText.init(\"$widget_id\", $text_js, 376, $pre_wrap_js);"
+}
+
+@text_widget(portrait=`portrait_primrose`, pre_wrap=False) $dialogue::prim
+
+Unfortunately, there's a problem with the easy way.
+It's not a big problem, and most people probably won't care about it, but I do!
+Watch what happens when the text is long enough to wrap to the next line:
+
+@text_widget(portrait=`portrait_sage`, pre_wrap=False, right=True) $dialogue::sage
+
+Notice how the words "dubious" and "batch" start appearing at the end of the line, then jump to the next line when more letters are shown.
+When we naively draw the substring and let it wrap automatically, those words are truncated and there's no way to know where they @emph would wrap if the letters were all there.
+
+It would look nicer if partially-revealed words didn't jump around during the animation.
+To achieve that, we need to figure out in advance where the text needs to wrap.
+The simplest solution is to "pre-wrap" the string before drawing it, by inserting newlines at the appropriate places.
+Here's a JavaScript function that does that:
+
+```
+function wrapText(text, width) {
+    // build an array of lines
+    const out = [];
+    
+    let line = '';
+    for(const word of text.split(/\s+/)) {
+        if(line === '') {
+            line = word;
+        } else {
+            const longerLine = line + ' ' + word;
+            if(measureTextWidth(longerLine) > width) {
+                // the new line would be too long; wrap here
+                out.push(line);
+                line = word;
+            } else {
+                line = longerLine;
+            }
+        }
+    }
+    
+    // lines only get pushed when they wrap;
+    // still need to add the last line to the array
+    if(line !== '') {
+        out.push(line);
+    }
+    
+    // join the lines together, with newlines where it wraps
+    return out.join('\n');
+}
+```
+
+For this to work, we need some function `measureTextWidth` which determines how wide a given string will appear.
+This will normally be available from the same API which draws the text; for example, on a HTML canvas it's `measureText(line).width`.
+Alternatively, if you're using a monospace font, it could be as easy as `line.length * LETTER_WIDTH`.
+
+OK, so this solution isn't perfect: [
+    {If a word is too long to fit in the container, it will overflow instead of breaking to the next line (the original version has this problem too),},
+    {It doesn't respect newlines in the original string,},
+    {It spends an extra animation frame 'revealing' each `'\n'` character.},
+]
+But it's simple, and good enough for game dialogue.
+Here's what it looks like in action:
+
+@text_widget(portrait=`portrait_sage`, pre_wrap=True, right=True) $dialogue::sage
+
+A tiny improvement? Yes.
+Worth it? Also yes.
+
+In our actual game, I do something like the above, but not exactly.
+It turns out that on an HTML canvas, it's much faster to call `drawImage` for every individual letter, than to call `fillText` just once.
+So all of the text is rendered using bitmap fonts, and since the fonts we use aren't monospace, I need to compute coordinates for each letter in the string.
+
+It makes sense to do that just once for the whole string and store the results.
+So the string still gets wrapped only once, but then instead of taking a substring of length `k` on each frame, I just draw the first `k` letters at their correct coordinates.
+The coordinates don't have to be recomputed for each `k`, and that naturally avoids the jumping words problem.

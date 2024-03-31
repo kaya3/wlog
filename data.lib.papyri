@@ -17,7 +17,7 @@
             slug=$slug,
             **$page_data,
         ).,
-    ) @list_files `pages/`,
+    ) @file::list `pages/`,
     
     page_header={
         <h1>@href($config::base_url) $config::site_title</h1>
@@ -28,9 +28,10 @@
         <nav data_title="Most Recent">
         @list::map(@fn $post -> {
             @href($post::url) $post::title
-        }) @reverse @data::posts::slice($config::posts_most_recent::negate).
+        }) @list::reversed @data::posts::slice(@config::posts_most_recent::negate.).
         </nav>
         <nav data_title="Archive">
+        @list::reversed
         @data::years::map(@fn $year -> {
             @href($year::url) $year::year
         }).

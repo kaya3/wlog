@@ -2,12 +2,12 @@
 
 @load_js `mjr/runtime`
 
-@export @fn mjr_widget($model: str, $size) $_: none -> {
+@export @fn mjr_widget($model: str, $size). -> {
     @let(
         widget_id=@str::unique_id `mjr_widget`,
         width=@match $size {_: int -> $size, [$w: int, _] -> $w, _ -> @raise `size must be int or [int, int]`,},
         height=@match $size {_: int -> $size, [_, $h: int] -> $h, _ -> @raise `size must be int or [int, int]`,},
     )...
     <div id=$widget_id class=`mjr-widget`/>#
-    <script type=`text/javascript`>MJr.initWidget(\"$widget_id\", $width, $height, mjr_$model);</script>
+    @script "MJr.initWidget(\"$widget_id\", $width, $height, mjr_$model);"
 }

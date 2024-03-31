@@ -3,7 +3,7 @@
 # load data for pages and posts
 @export @let(
     posts=@list::map(@fn $i_path -> @match $i_path {
-        [$i, $path and "posts/{$y-$m-$d}_$slug"] ->
+        [$i, $path & "posts/{$y-$m-$d}_$slug"] ->
             @let(
                 post_data=@import $path,
                 out_path="$y/$m/$d/$slug.html",
@@ -12,7 +12,7 @@
                 heading={
                     @h2 @fa_anchor(`fa-link`, href=$url) $post_data::title
                     <div class="metadata">
-                    <time datetime=$date>$date</time> --- @match $post_data::tags::is_empty {
+                    <time datetime=$date>$date</time> --- @match @post_data::tags::is_empty. {
                         True -> {untagged},
                         False -> @list::join(`, `) @post_data::tags::map($tag_link).,
                     }
@@ -42,7 +42,10 @@
                 year=$y,
                 **$post_data,
             ).,
-    }) @enumerate @list_files `posts/`,
+    })
+    @list::enumerate
+    
+    @file::list `posts/`,
     
     years=@list::map(
         @fn $year -> @dict::new(
@@ -58,9 +61,9 @@
             name=$tag,
             out_path="tag/$tag.html",
             url=@tag_url $tag,
-            posts=@posts::filter(@fn $post -> @contains($tag) $post::tags).,
+            posts=@posts::filter(@fn $post -> @post::tags::contains($tag).).,
         ).
-    ) @distinct @flat @posts::map(
+    ) @distinct @list::flat @posts::map(
         @fn $post -> $post::tags
     ).,
 ).

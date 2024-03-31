@@ -1,5 +1,7 @@
 @include `../common.lib`
 
+@fn td $v -> <td>$v</td>
+
 @export @fn dfa_table($alphabet: str list, $accept: int list) $tbl: int list list -> {
     <table class=`tabular-data dfa`>
         <tbody>
@@ -7,20 +9,20 @@
         @list::join @list::map(@fn $row -> @match $row {
             [$i, $r] -> {
                 <tr>
-                <th scope=`row`>State $i@match @contains($i) $accept {True -> {*}, False -> .}</th>
-                @list::join @r::map(@fn $j -> <td>$j</td>).
+                <th scope=`row`>State $i@match @accept::contains($i). {True -> {*}, False -> .}</th>
+                @list::join @r::map($td).
                 </tr>
             },
-        }) @enumerate $tbl
+        }) @tbl::enumerate.
         </tbody>
     </table>
 }
 
-@export @fn dfa_state_history($string: str list, $states: inline list) $_: none -> {
+@export @fn dfa_state_history($string: str list, $states: inline list). -> {
     <table class=`tabular-data dfa-state-history`>
         <tbody>
-        <tr><td/>@list::join @string::map(@fn $s -> <td>@b $s</td>).</tr>
-        <tr><td>0</td>@list::join @states::map(@fn $i -> <td>$i</td>).</tr>
+        <tr><td/>@list::join @list::map($td) @string::map($b).</tr>
+        <tr><td>0</td>@list::join @states::map($td).</tr>
         </tbody>
     </table>
 }
@@ -29,7 +31,7 @@
     <table class=`tabular-data dfa-grid`>
         <tbody>
         @list::join @tbl::map(@fn $row -> {
-            <tr>@list::join @row::map(@fn $x -> <td>$x</td>).</tr>
+            <tr>@list::join @row::map($td).</tr>
         }).
         </tbody>
     </table>

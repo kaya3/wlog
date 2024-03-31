@@ -8,7 +8,8 @@
     @old_page(
         title={$config::site_title --- $title},
         head={
-            <link rel=`stylesheet` type=`text/css` href="{$config::base_url}resources/style.css">
+            <link rel=`stylesheet` type=`text/css` href=@resource `style.css`>#
+            @script(src=@resource `mathml-polyfill.js`).#
         },
         header=$data::page_header,
         footer=$data::page_footer,
@@ -17,14 +18,13 @@
 
 # write pages
 @list::join @data::pages::map(@fn $p -> {
-    @write_file($p::out_path)
+    @file::write($p::out_path)
     @page(title=$p::title) $p::content
 }).
 
-@fn post_link_by_index $i: int -> @match @data::posts::slice($i, @i::add(1).). {
-    [] -> .,
-    [$post] -> @href($post::url) $post::title,
-}
+@fn post_link_by_index $i: int ->
+    @let(post=@data::posts::get($i).)
+    @href($post::url) $post::title
 
 # write posts
 @list::join @data::posts::map(@fn $post -> {
@@ -33,13 +33,13 @@
             0 -> .,
             $i -> <span>{<-} @post_link_by_index @i::add(-1).</span>,
         },
-        next_link=@match @post_link_by_index @post::index::add(1). {
-            . -> .,
-            $link -> <span style=`flex-grow: 1; text-align: right;`>$link {->}</span>
+        next_link=@match @post::index::add(1). {
+            =@data::posts::len. -> .,
+            $i -> <span style=`flex-grow: 1; text-align: right;`>@post_link_by_index $i {->}</span>
         },
     )...
     
-    @write_file($post::out_path)
+    @file::write($post::out_path)
     @page(title=$post::title) {
         $post::heading
         $post::content
@@ -51,36 +51,36 @@
 # write year archive pages
 @list::join @data::years::map(@fn $year -> {
     @let(title={Posts from $year::year})...
-    @write_file($year::out_path)
+    @file::write($year::out_path)
     @page(title=$title) {
         @h1 $title
-        <p>@plural($year::posts::len, `post`).{.}</p>
-        @list::join @reverse @year::posts::map(@fn $post -> $post::stub).
+        <p>@plural(@year::posts::len., `post`).{.}</p>
+        @list::join @list::reversed @year::posts::map(@fn $post -> $post::stub).
     }
 }).
 
 # write tag pages
 @list::join @data::tags::map(@fn $tag -> {
     @let(title={Posts tagged: $tag::name})...
-    @write_file($tag::out_path)
+    @file::write($tag::out_path)
     @page(title=$title) {
         @h1 $title
-        <p>@plural($tag::posts::len, `post`).{.}</p>
-        @list::join @reverse @tag::posts::map(@fn $post -> $post::stub).
+        <p>@plural(@tag::posts::len., `post`).{.}</p>
+        @list::join @list::reversed @tag::posts::map(@fn $post -> $post::stub).
     }
 }).
 
 # write .htaccess
 @match $config {
-    (htaccess=$s: str, **_) -> @write_file(`.htaccess`) $s,
+    (htaccess=$s: str, **_) -> @file::write(`.htaccess`) $s,
     . -> .,
 }
 
 # write home page
-@write_file(`index.html`)
+@file::write(`index.html`)
 @page(title={Home})...
 
 @list::join
     @list::map(@fn $post -> $post::stub)
-    @reverse
-    @data::posts::slice($config::posts_main_page::negate).
+    @list::reversed
+    @data::posts::slice(@config::posts_main_page::negate.).

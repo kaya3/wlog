@@ -24,13 +24,7 @@ var MJr = {
         let pixelScale = Math.max(1, Math.floor(384 / Math.max(width, height)));
         let divElem = document.getElementById(widgetID);
         
-        divElem.style.display = 'flex';
-        divElem.style.flexDirection = 'column';
-        divElem.style.alignItems = 'center';
-        divElem.style.gap = getComputedStyle(document.body).getPropertyValue('--margin-block-vertical');
-        
         let canvasElem = document.createElement('canvas');
-        canvasElem.style.border = getComputedStyle(document.body).getPropertyValue('--box-border');
         canvasElem.style.width = (width * pixelScale) + 'px';
         canvasElem.style.height = (height * pixelScale) + 'px';
         canvasElem.width = width * pixelScale;

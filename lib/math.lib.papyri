@@ -1,0 +1,201 @@
+@let(
+    xmlns=`http://www.w3.org/1998/Math/MathML`,
+    _tok_regex=@regex::compile `(\d+(?:\.\d*)?|\.\d+)|(\w)|([^\d\s\w\.\^]+|[\.\^])`,
+)...
+
+@fn _wrap_seq $v: html list -> @match $v {
+    [] -> .,
+    [$a, `_`, $b, `^`, $c, *$rest] |
+    [$a, `^`, $c, `_`, $b, *$rest] -> {<msubsup>$a$b$c</>@_wrap_seq $rest},
+    [$a, `_`, $b, *$rest] -> {<msub>$a$b</>@_wrap_seq $rest},
+    [$a, `^`, $b, *$rest] -> {<msup>$a$b</>@_wrap_seq $rest},
+    [$a, *$rest] -> {$a@_wrap_seq $rest},
+}
+@fn _wrap_row $c -> @match $c {
+    . -> .,
+    <_ **_>_</> -> $c,
+    _ -> <mrow>$c</>,
+}
+@fn _wrap $c -> @match $c {
+    . -> <mspace/>,
+    _: int -> @num $c,
+    _: html -> {
+        @_wrap_row
+        @_wrap_seq
+        @list::flat
+        @list::map(@fn $node -> @match $node {
+            _: str -> @list::map(@fn $tok -> @match $tok {
+                [`_` | `^`, *_] -> $tok::0,
+                [_, $n: str, ., .] -> <mn>$n</>,
+                [_, ., $i: str, .] -> <mi>$i</>,
+                [_, ., ., $o: str] -> @op $o,
+            }) @_tok_regex::find_all $node,
+            <span>$h</> -> [@_wrap $h],
+            <b>$h</> |
+            <strong>$h</> -> [@bold $h],
+            <i>$h</> -> [@it $h],
+            <var>$h</> -> [@var $h],
+            <sub>$h</> -> [`_`, @_wrap $h],
+            <sup>$h</> -> [`^`, @_wrap $h],
+            _ -> [$node],
+        })
+        @list::filter(@fn $v -> @bool::negate @v::is_whitespace.)
+        @list::html_nodes $c
+    },
+}
+@fn _variant($_v: str) $c -> @attributes(mathvariant=$_v) @_wrap $c
+@fn _nospace $c -> @attributes(lspace=0, rspace=0) @_wrap $c
+
+@export @fn display_math $c -> <div><math xmlns=$xmlns display=`block` displaystyle=True>@_wrap $c</></>
+@export @fn math $c -> <math xmlns=$xmlns displaystyle=False>@_wrap $c</>
+@export @fn row $c ->
+    @let(r=@_wrap $c)
+    @match $r {
+        <mrow **_>_</> -> $r,
+        _ -> <mrow>$r</>,
+    }
+@export @fn num $c: str -> @match $c {
+    "-$c" -> @row {@_nospace @op {&minus;}<mn>$c</>},
+    _ -> <mn>$c</>,
+}
+@export @fn op $c: str -> @match $c {
+    `-` -> <mo>&minus;</>,
+    `/` -> @_nospace <mo>$c</>,
+    _ -> <mo>$c</>,
+}
+
+@export @fn bb $c: str -> @_variant(`double-struck`) @var $c
+@export @fn bold $c: str -> @_variant(`bold`) @var $c
+@export @fn bold_frak $c: str -> @_variant(`bold-fraktur`) @var $c
+@export @fn bold_it $c: str -> @_variant(`bold-italic`) @var $c
+@export @fn bold_sc $c: str -> @_variant(`bold-script`) @var $c
+@export @fn frak $c: str -> @_variant(`fraktur`) @var $c
+@export @fn it $c: str -> @_variant(`italic`) @var $c
+@export @fn sc $c: str -> @_variant(`script`) @var $c
+@export @fn text $c: str -> <mtext>$c</>
+@export @fn tt $c: str -> @_variant(`monospace`) @var $c
+@export @fn rm $c: str -> @_variant(`normal`) @var $c
+@export @fn var $c: str -> <mi>$c</>
+
+@export @fn table $tbl: list list -> {
+    <mtable>
+    @tbl::map(@fn $row -> {
+        <mtr>@row::map(@fn $c -> <mtd>@_wrap $c</>).</>
+    }).
+    </mtable>
+}
+
+@fn _bracket $c: str ->
+    <mo fence=True lspace=0 rspace=0 stretchy=True>$c</>
+
+@export @fn brackets($_0: str = `(`, $_1: str = `)`) $c -> @row {{@_bracket $_0}{@_wrap $c}{@_bracket $_1}}
+@export @fn func($_0) $c -> @match $c {
+    . -> @_wrap $_0,
+    _ -> @row {{@_wrap $_0}{@op {&ApplyFunction;}}{@_wrap $c}},
+}
+@export @fn over($_0, $accent?: bool) $c -> @match $_0 {
+    . -> @_wrap $c,
+    _ -> <mover accent?=$accent>{@_wrap $c}{@_wrap $_0}</>,
+}
+@export @fn root($_0?) $c -> @match $_0 {
+    . -> <msqrt>@_wrap $c</>,
+    _ -> <mroot>{@_wrap $_0}{@_wrap $c}</>,
+}
+@export @fn sub($_0) $c -> @match $_0 {
+    . -> @_wrap $c,
+    _ -> <msub>{@_wrap $c}{@_wrap $_0}</>,
+}
+@export @fn subsup($_0, $_1) $c -> @match [$_0, $_1] {
+    [_, .] -> @sub($_0) $c,
+    [., _] -> @sup($_1) $c,
+    _ -> <msubsup>{@_wrap $c}{@_wrap $_0}{@_wrap $_1}</>,
+}
+@export @fn sup($_0) $c -> @match $_0 {
+    . -> @_wrap $c,
+    _ -> <msup>{@_wrap $c}{@_wrap $_0}</>,
+}
+@export @fn under($_0) $c -> @match $_0 {
+    . -> @_wrap $c,
+    _ -> <munder>{@_wrap $c}{@_wrap $_0}</>,
+}
+@export @fn underover($_0, $_1) $c -> @match [$_0, $_1] {
+    [_, .] -> @under($_0) $c,
+    [., _] -> @over($_1) $c,
+    _ -> <munderover>{@_wrap $c}{@_wrap $_0}{@_wrap $_1}</>,
+}
+
+@export @fn abs $c -> @brackets(`|`, `|`) $c
+@export @fn bar $c -> @over(@op {&OverBar;}, accent=True) $c
+@export @fn binom($_0, $_1). -> @brackets <mfrac linethickness=0>{@_wrap $_0}{@_wrap $_1}</>
+@export @fn ceil $c -> @brackets({&lceil;}, {&rceil;}) $c
+@export @fn dotted $c -> @over(@op `.`, accent=True) $c
+@export @fn floor $c -> @brackets({&lfloor;}, {&rfloor;}) $c
+@export @fn frac($_0, $_1). -> <mfrac>{@_wrap $_0}{@_wrap $_1}</>
+@export @fn hat $c -> @over(@op {&Hat;}, accent=True) $c
+@export @fn int($_0?, $_1?) $c -> {{@underover($_0, $_1) @op {&int;}}{@_wrap $c}}
+@export @fn lim($_0?) $c -> @row {{@under($_0) @rm lim}{@_wrap $c}}
+@export @fn matrix $c: list list -> @brackets @table $c
+@export @fn max($_0?) $c -> @row {{@under($_0) @rm max}{@_wrap $c}}
+@export @fn min($_0?) $c -> @row {{@under($_0) @rm min}{@_wrap $c}}
+@export @fn norm($_0?) $c -> @sub($_0) @brackets({&Vert;}, {&Vert;}) $c
+@export @fn phantom $c -> <mphantom>@_wrap $c</>
+@export @fn prod($_0?, $_1?) $c -> {{@underover($_0, $_1) @op {&prod;}}{@_wrap $c}}
+@export @fn sqrt $c -> <msqrt>@_wrap $c</>
+@export @fn sum($_0?, $_1?) $c -> {{@underover($_0, $_1) @op {&sum;}}{@_wrap $c}}
+@export @fn tilde $c -> @over(@op `~`, accent=True) $c
+@export @fn vec $c -> @over(@op {\u20D7}, accent=True) $c
+
+@export @fn Im $c -> @func(@rm Im) $c
+@export @fn Re $c -> @func(@rm Re) $c
+@export @fn Sym $c -> @func(@rm Sym) $c
+@export @fn Tr $c -> @func(@rm Tr) $c
+@export @fn arccos $c -> @func(@rm arccos) $c
+@export @fn arccosec $c -> @func(@rm arccosec) $c
+@export @fn arccot $c -> @func(@rm arccot) $c
+@export @fn arccsc $c -> @func(@rm arccsc) $c
+@export @fn arcosech $c -> @func(@rm arcosech) $c
+@export @fn arcosh $c -> @func(@rm arcosh) $c
+@export @fn arcsec $c -> @func(@rm arcsec) $c
+@export @fn arcsch $c -> @func(@rm arcsch) $c
+@export @fn arcsin $c -> @func(@rm arcsin) $c
+@export @fn arctan2 $c -> @func(@rm `arctan2`) $c
+@export @fn arg $c -> @func(@rm arg) $c
+@export @fn arsech $c -> @func(@rm arsech) $c
+@export @fn arsinh $c -> @func(@rm arsinh) $c
+@export @fn artanh $c -> @func(@rm artanh) $c
+@export @fn atan2 $c -> @func(@rm `atan2`) $c
+@export @fn cos($_0?) $c -> @func(@sup($_0) @rm cos) $c
+@export @fn cosec($_0?) $c -> @func(@sup($_0) @rm cosec) $c
+@export @fn cosech($_0?) $c -> @func(@sup($_0) @rm cosech) $c
+@export @fn cosh($_0?) $c -> @func(@sup($_0) @rm cosh) $c
+@export @fn cot($_0?) $c -> @func(@sup($_0) @rm cot) $c
+@export @fn coth($_0?) $c -> @func(@sup($_0) @rm coth) $c
+@export @fn csc($_0?) $c -> @func(@sup($_0) @rm csc) $c
+@export @fn csch($_0?) $c -> @func(@sup($_0) @rm csch) $c
+@export @fn deg $c -> @func(@rm deg) $c
+@export @fn det $c -> @func(@rm det) $c
+@export @fn dim $c -> @func(@rm dim) $c
+@export @fn dom $c -> @func(@rm dom) $c
+@export @fn erf $c -> @func(@rm erf) $c
+@export @fn erfc $c -> @func(@rm erfc) $c
+@export @fn exp $c -> @func(@rm exp) $c
+@export @fn gcd $c -> @func(@rm gcd) $c
+@export @fn hcf $c -> @func(@rm hcf) $c
+@export @fn im $c -> @func(@rm im) $c
+@export @fn ker $c -> @func(@rm ker) $c
+@export @fn lb $c -> @func(@rm lb) $c
+@export @fn lcm $c -> @func(@rm lcm) $c
+@export @fn ld $c -> @func(@rm ld) $c
+@export @fn lg $c -> @func(@rm lg) $c
+@export @fn ln $c -> @func(@rm ln) $c
+@export @fn log($_0?) $c -> @func(@sub($_0) @rm log) $c
+@export @fn ran $c -> @func(@rm ran) $c
+@export @fn rank $c -> @func(@rm rank) $c
+@export @fn sec($_0?) $c -> @func(@sup($_0) @rm sec) $c
+@export @fn sech($_0?) $c -> @func(@sup($_0) @rm sech) $c
+@export @fn sgn $c -> @func(@rm sgn) $c
+@export @fn sin($_0?) $c -> @func(@sup($_0) @rm sin) $c
+@export @fn sinc($_0?) $c -> @func(@sup($_0) @rm sinc) $c
+@export @fn sinh($_0?) $c -> @func(@sup($_0) @rm sinh) $c
+@export @fn tan($_0?) $c -> @func(@sup($_0) @rm tan) $c
+@export @fn tanh($_0?) $c -> @func(@sup($_0) @rm tanh) $c
